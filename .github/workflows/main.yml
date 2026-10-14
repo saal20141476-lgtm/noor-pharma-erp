@@ -7,9 +7,30 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Download source
         uses: actions/checkout@v4
+
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Extract project ZIP
+        run: |
+          ZIP=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: No ZIP file found in repository root"
+            exit 1
+          fi
+          mkdir -p app-source
+          unzip -o "$ZIP" -d app-source
+          PACKAGE=$(find app-source -type f -name package.json | head -n 1)
+          if [ -z "$PACKAGE" ]; then
+            echo "ERROR: package.json was not found inside ZIP"
+            find app-source -maxdepth 3 -type f
+            exit 1
+          fi
+          echo "APP_DIR=$(dirname "$PACKAGE")" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -17,16 +38,16 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: cd "$APP_DIR" && npm install
 
       - name: Build web app
-        run: npm run build
+        run: cd "$APP_DIR" && npm run build
 
       - name: Prepare Android
-        run: npx cap add android
+        run: cd "$APP_DIR" && npx cap add android
 
       - name: Sync Android
-        run: npx cap sync android
+        run: cd "$APP_DIR" && npx cap sync android
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -38,11 +59,11 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Build APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+        run: cd "$APP_DIR/android" && chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: noor-pharma-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          
+          path: ${{ env.APP_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
+
