@@ -3,12 +3,18 @@ name: Build Noor Pharma APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-24.04
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
-      - name: Download source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install unzip
@@ -27,13 +33,13 @@ jobs:
           unzip -oq "$ZIP" -d app-source
           PACKAGE="$(find app-source -type f -name package.json -not -path '*/node_modules/*' | head -n 1)"
           if [ -z "$PACKAGE" ]; then
-            echo "::error::package.json was not found inside ZIP"
+            echo "::error::package.json was not found inside the ZIP"
             find app-source -maxdepth 4 -type f | head -n 100
             exit 1
           fi
           APP_DIR="$(dirname "$PACKAGE")"
           echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
-          echo "Using project directory: $APP_DIR"
+          echo "Using project root: $APP_DIR"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -54,15 +60,24 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Add and sync Android
+      - name: Configure preinstalled Android SDK
+        shell: bash
         run: |
-          npx cap add android
-          npx cap sync android
-        working-directory: ${{ env.APP_DIR }}
+          set -euo pipefail
+          if [ ! -d "$ANDROID_HOME" ]; then
+            echo "::error::Android SDK directory not found: $ANDROID_HOME"
+            exit 1
+          fi
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager was not found in the preinstalled Android SDK"
+            find "$ANDROID_HOME" -maxdepth 5 -type f -name sdkmanager || true
+            exit 1
+          fi
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          yes | "$SDKMANAGER" --licenses || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Add and sync Android
         run: |
@@ -83,4 +98,4 @@ jobs:
           name: noor-pharma-debug-apk
           path: ${{ env.APP_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-        
+          retention-days: 7
