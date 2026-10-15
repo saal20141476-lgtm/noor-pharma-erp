@@ -1,0 +1,6 @@
+{
+  "appId": "com.sakhr.daftarhisabat",
+  "appName": "دفتر الحسابات",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

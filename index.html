@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102a43"><meta name="description" content="دفتر حسابات عربي يعمل دون إنترنت">
+<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+<title>دفتر الحسابات</title>
+</head>
+<body>
+<header class="top"><div><div class="eyebrow">دفتر الحسابات</div><h1>حساباتك بوضوح</h1></div><button id="backupBtn" class="ghost">نسخ احتياطي</button></header>
+<nav class="tabs">
+<button class="tab active" data-page="home">الرئيسية</button><button class="tab" data-page="people">الحسابات</button><button class="tab" data-page="moves">العمليات</button><button class="tab" data-page="reports">التقارير</button><button class="tab" data-page="settings">الإعدادات</button>
+</nav>
+<main>
+<section id="page-home" class="page active">
+<div class="welcome"><div><span class="eyebrow">ملخص الدفتر</span><h2>مرحبًا بك</h2><p>سجّل ديونك ومقبوضاتك ومدفوعاتك في مكان واحد.</p></div><span class="pill" id="syncState">محلي • دون إنترنت</span></div>
+<div class="stats"><article class="stat"><span>مبالغ لك</span><strong id="totalOwed">0</strong><small>حسب العملة</small></article><article class="stat"><span>مبالغ عليك</span><strong id="totalOwe">0</strong><small>حسب العملة</small></article><article class="stat"><span>عدد الحسابات</span><strong id="peopleCount">0</strong><small>عميل / مورد</small></article></div>
+<div class="section-head"><h3>آخر العمليات</h3><button class="link" data-go="moves">عرض الكل ←</button></div><div id="recentMoves" class="stack"></div>
+<div class="quick"><button class="primary" data-action="add-person">＋ حساب جديد</button><button class="secondary" data-action="add-move">＋ تسجيل عملية</button></div>
+</section>
+<section id="page-people" class="page">
+<div class="section-head"><div><h2>الحسابات</h2><p class="muted">كل عميل أو مورد في سجل مستقل</p></div><button class="primary" data-action="add-person">＋ إضافة</button></div>
+<input id="peopleSearch" class="search" placeholder="ابحث باسم الحساب أو الهاتف…">
+<div id="peopleList" class="stack"></div>
+</section>
+<section id="page-moves" class="page">
+<div class="section-head"><div><h2>العمليات</h2><p class="muted">ديون، سداد، مقبوضات ومدفوعات</p></div><button class="primary" data-action="add-move">＋ عملية</button></div>
+<div class="filters"><input id="moveSearch" class="search" placeholder="بحث في العمليات…"><input id="fromDate" type="date" aria-label="من تاريخ"><input id="toDate" type="date" aria-label="إلى تاريخ"></div>
+<div id="movesList" class="stack"></div>
+</section>
+<section id="page-reports" class="page">
+<div class="section-head"><div><h2>التقارير</h2><p class="muted">ملخص الأرصدة والحركة خلال فترة</p></div></div>
+<div class="panel"><label>من تاريخ<input type="date" id="reportFrom"></label><label>إلى تاريخ<input type="date" id="reportTo"></label><button class="primary full" id="runReport">إنشاء التقرير</button></div>
+<div id="reportOutput" class="stack"></div>
+<div class="export-grid"><button class="secondary" id="csvBtn">تصدير العمليات CSV</button><button class="secondary" id="printBtn">طباعة / PDF</button></div>
+</section>
+<section id="page-settings" class="page">
+<div class="section-head"><div><h2>الإعدادات والنسخ</h2><p class="muted">حفظ محلي واستعادة البيانات</p></div></div>
+<div class="panel"><h3>النسخ الاحتياطي</h3><p class="muted">ينشئ ملف JSON يحتوي الحسابات والعمليات والإعدادات.</p><button class="primary full" id="backupBtn2">تنزيل نسخة احتياطية</button><label class="file-label">استعادة نسخة JSON<input type="file" id="restoreFile" accept=".json,application/json"></label></div>
+<div class="panel"><h3>المزامنة بين الويب وأندرويد</h3><p class="muted">التخزين المحلي يعمل الآن. لتفعيل المزامنة الفعلية بين الأجهزة، أدخل بيانات مشروع Supabase الخاص بك في الأسفل، ثم نفّذ ملف الإعداد المرفق. لا تضع مفتاح service_role هنا.</p>
+<label>رابط Supabase<input id="sbUrl" placeholder="https://xxxx.supabase.co"></label><label>مفتاح anon/public<input id="sbKey" placeholder="مفتاح anon"></label><label>معرّف الدفتر المشترك<input id="bookId" placeholder="مثال: دفتر-صخر-01"></label><button class="primary full" id="saveSync">حفظ إعدادات المزامنة</button><button class="secondary full" id="syncBtn">مزامنة الآن</button><p id="syncMessage" class="muted" role="status"></p></div>
+<div class="panel"><h3>العملة الافتراضية</h3><select id="defaultCurrency"><option value="YER">ريال يمني (YER)</option><option value="SAR">ريال سعودي (SAR)</option><option value="USD">دولار أمريكي (USD)</option><option value="AED">درهم إماراتي (AED)</option></select><button id="saveCurrency" class="secondary full">حفظ العملة</button></div>
+<div class="panel danger-zone"><h3>مسح بيانات الجهاز</h3><p class="muted">لا تستخدم هذا الخيار إلا بعد التأكد من وجود نسخة احتياطية.</p><button class="danger full" id="clearData">مسح جميع البيانات المحلية</button></div>
+</section>
+</main>
+<dialog id="personDialog"><form id="personForm" method="dialog"><div class="modal-head"><h2>حساب جديد</h2><button type="button" class="close" data-close>×</button></div><input type="hidden" id="personId"><label>اسم الحساب *<input id="personName" required maxlength="100" placeholder="اسم العميل أو المورد"></label><label>رقم الهاتف<input id="personPhone" inputmode="tel" maxlength="30"></label><label>نوع الحساب<select id="personType"><option value="customer">عميل</option><option value="supplier">مورد</option><option value="both">عميل ومورد</option><option value="personal">شخصي</option></select></label><label>ملاحظات<textarea id="personNotes" rows="2"></textarea></label><div class="modal-actions"><button type="button" class="secondary" data-close>إلغاء</button><button class="primary" type="submit">حفظ الحساب</button></div></form></dialog>
+<dialog id="moveDialog"><form id="moveForm" method="dialog"><div class="modal-head"><h2>تسجيل عملية</h2><button type="button" class="close" data-close>×</button></div><input type="hidden" id="moveId"><label>الحساب *<select id="movePerson" required></select></label><label>نوع العملية<select id="moveType"><option value="debt_to_us">دين جديد لصالحنا (له علينا)</option><option value="debt_to_them">دين جديد علينا (لنا عليه)</option><option value="receipt">مقبوضات / سداد لنا</option><option value="payment">مدفوعات / سداد منه</option></select></label><label>المبلغ *<input id="moveAmount" required type="number" min="0.01" step="0.01" inputmode="decimal"></label><label>العملة<select id="moveCurrency"><option value="YER">ريال يمني (YER)</option><option value="SAR">ريال سعودي (SAR)</option><option value="USD">دولار أمريكي (USD)</option><option value="AED">درهم إماراتي (AED)</option></select></label><label>التاريخ *<input id="moveDate" required type="date"></label><label>البيان<input id="moveNote" maxlength="180" placeholder="تفاصيل العملية"></label><div class="hint">الرصيد يُحسب من العمليات المسجلة، مع فصل كل عملة عن الأخرى.</div><div class="modal-actions"><button type="button" class="secondary" data-close>إلغاء</button><button class="primary" type="submit">حفظ العملية</button></div></form></dialog>
+<dialog id="detailDialog"><div id="detailContent"></div><div class="modal-actions"><button class="secondary" data-close>إغلاق</button></div></dialog>
+<div id="toast" class="toast" role="status"></div>
+<footer>دفتر الحسابات • البيانات محفوظة على هذا الجهاز</footer>
+<script src="app.js"></script>
+</body></html>
